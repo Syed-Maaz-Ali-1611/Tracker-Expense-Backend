@@ -1,3 +1,4 @@
+const User = require("../models/User")
 const jwt = require("jsonwebtoken")
 
 // Generate JWT token
@@ -9,6 +10,38 @@ const generateToken = (id) => {
 
 //Register User
 exports.registerUser = async (req, res) =>{
+      console.log('Request body:', req.body); // Add this line
+    const { fullName , email , password, profileImageUrl } = req.body;
+
+    //validation checking for missing feilds
+    if (!fullName || !email || !password){
+        return res.status(400).json({message : "All Feilds are required"});
+    } 
+
+    try {
+        //check if email is already exist 
+        const exisitingUser = await User.findOne({email});
+        if(exisitingUser){
+            return res.status(400).json({message : "Email already in use"});
+        }
+
+        //create user
+
+        const user = await User.create({
+            fullName,
+            email,
+            password,
+            profileImageUrl,
+        })
+
+        res.status(201).json({
+            id: user._id, 
+            user,
+            token : generateToken(user._id),
+        })
+    } catch(err){
+        res.status(500).json({message : "Error registering User", error : err.message}); 
+    }
 }
 
 //Login User
